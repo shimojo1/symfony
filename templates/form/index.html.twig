@@ -1,0 +1,43 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}入力{% endblock %}
+
+{% block body %}
+<h2>入力画面</h2>
+<ul>
+{% for error in errors %}
+  <li>{{ error.message }}</li>
+{% endfor %}
+</ul>
+<form action="{{ path('form_confirm') }}" method="post">
+  <table>
+    <tbody>
+      <tr>
+        <th>名前</th>
+        <td><input type="text" name="name" value="{{ form.name }}" /></td>
+      </tr>
+      <tr>
+        <th>年齢</th>
+        <td><input type="text" name="age" value="{{ form.age }}" /></td>
+      </tr>
+      <tr>
+        <th>都道府県</th>
+        <td><input type="text" name="prefecture" value="{{ form.prefecture }}" /></td>
+      </tr>
+      <tr>
+        <th>市区町村</th>
+        <td><input type="text" name="address1" value="{{ form.address1 }}" /></td>
+      </tr>
+      <tr>
+        <th>番地</th>
+        <td><input type="text" name="address2" value="{{ form.address2 }}" /></td>
+      </tr>
+      <tr>
+        <th>コメント</th>
+        <td><textarea name="comment"rows="4" cols="40">{{ form.comment }}</textarea>
+      </tr>
+    </tbody>
+  </table>
+  <p><input type="submit" value="確認画面へ" /></p>
+</form>
+{% endblock %}
