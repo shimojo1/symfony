@@ -4,11 +4,6 @@
 
 {% block body %}
 <h2>確認画面</h2>
-<ul>
-{% for error in errors %}
-  <li>{{ error.message }}</li>
-{% endfor %}
-</ul>
 <table>
   <tbody>
     <tr>
@@ -33,12 +28,12 @@
     </tr>
     <tr>
       <th>コメント</th>
-      <td>{{ form['comment'] }}</td>
+      <td>{{ form.comment }}</td>
     </tr>
   </tbody>
 </table>
 <form action="{{ path('form_complete') }}" method="post">
   <a href="{{ path('form') }}">戻る</a>
-  <input type="submit" value="完了画面へ" /></p>
+  <input type="submit" value="完了画面へ" />
 </form>
 {% endblock %}

@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Form;
+use App\Form\FormType;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -22,17 +23,24 @@ class FormController extends AbstractController
      * @Route("/form", name="form")
      * @Route("/form/index", name="form_index")
      */
-    public function index(SessionInterface $session): Response
+    public function index(Request $request, SessionInterface $session): Response
     {
-        /*
-         * モデルからフォームで利用する
-         * データ項目が格納されたハッシュ配列を取得
-         */
         //セッションから情報を取得
         $form = $session->get('form') ?: new Form();
+        $form = $this->createForm(FormType::class, $form);
+
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            // フォームデータをセッションに保存
+            $session->set('form', $form->getData());
+
+            // フォームが送信され、バリデーションに成功した場合確認画面へリダイレクトする
+            return $this->redirectToRoute('form_confirm', ['form' => $form->getData()]);
+        }
 
         return $this->render('form/index.html.twig', [
-            'form' => $form,
+            'form' => $form->createView(),
             'errors' => [],
         ]);
     }
@@ -42,44 +50,18 @@ class FormController extends AbstractController
      */
     public function confirm(Request $request, SessionInterface $session): Response
     {
-        //POSTリクエストでなければ404へリダイレクト
-        $params = $request->request->all();
-        if (
-            !isset($params['name']) ||
-            !isset($params['age']) ||
-            !isset($params['prefecture']) ||
-            !isset($params['address1']) ||
-            !isset($params['address2']) ||
-            !isset($params['comment'])
-        ) {
-            return $this->redirect('/form');
-        }
-        $form = new Form();
-        $form
-            ->setName($params['name'])
-            ->setAge($params['age'])
-            ->setPrefecture($params['prefecture'])
-            ->setAddress1($params['address1'])
-            ->setAddress2($params['address2'])
-            ->setComment($params['comment']);
+        // セッションからフォームデータを取得
+        $form = $session->get('form');
 
-        $errors = $this->validator->validate($form);
-
-        //エラーがない場合、確認画面を表示
-        if (count($errors) === 0) {
-            //入力されたデータをセッションに格納
-            $session->set('form', $form);
-            //Viewテンプレートに渡すデータ配列作成
-            return $this->render('form/confirm.html.twig', [
-                'form' => $params,
-                'errors' => $errors,
-                'base_url' => '/',
-            ]);
+        // フォームデータがない場合、フォーム入力画面にリダイレクト
+        if (!$form) {
+            // フォームデータがない場合、フォーム入力画面にリダイレクト
+            return $this->redirectToRoute('form');
         }
-        //Viewテンプレートに渡すデータ配列作成エラー情報が渡される
-        return $this->render('form/index.html.twig', [
+
+        // 確認画面を表示
+        return $this->render('form/confirm.html.twig', [
             'form' => $form,
-            'errors' => $errors,
         ]);
     }
 
@@ -88,13 +70,14 @@ class FormController extends AbstractController
      */
     public function complete(Request $request, SessionInterface $session): Response
     {
-        //POSTリクエストでなければ404へリダイレクト
-        if (!$request->isMethod('POST')) {
+        // セッションからフォームデータを取得
+        $form = $session->get('form');
+
+        // POSTリクエストでなければ404へリダイレクト
+        // フォームデータがない場合、フォーム入力画面にリダイレクト
+        if (!$request->isMethod('POST') || !$form) {
             return $this->redirectToRoute('form');
         }
-
-        // セッションからフォームのデータを取得
-        $form= $session->get('form');
 
         // Doctrineのエンティティマネージャーを取得
         $entityManager = $this->getDoctrine()->getManager();
